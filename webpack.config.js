@@ -299,6 +299,7 @@ function getWebviewsConfig(mode, env) {
 		getHtmlPlugin('settings', false, mode, env),
 		getHtmlPlugin('timeline', true, mode, env),
 		getHtmlPlugin('welcome', false, mode, env),
+		getHtmlPlugin('workspaces', true, mode, env),
 		getCspHtmlPlugin(mode, env),
 		new InlineChunkHtmlPlugin(HtmlPlugin, mode === 'production' ? ['\\.css$'] : []),
 		new CopyPlugin({
@@ -344,6 +345,7 @@ function getWebviewsConfig(mode, env) {
 			settings: './settings/settings.ts',
 			timeline: './plus/timeline/timeline.ts',
 			welcome: './welcome/welcome.ts',
+			workspaces: './plus/workspaces/workspaces.ts',
 		},
 		mode: mode,
 		target: 'web',
