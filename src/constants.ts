@@ -153,6 +153,7 @@ export const enum Commands {
 	PlusValidate = 'gitlens.plus.validate',
 	QuickOpenFileHistory = 'gitlens.quickOpenFileHistory',
 	RefreshGraph = 'gitlens.graph.refresh',
+	RefreshWorkspaces = 'gitlens.workspaces.refresh',
 	RefreshHover = 'gitlens.refreshHover',
 	RefreshTimelinePage = 'gitlens.refreshTimelinePage',
 	ResetAvatarCache = 'gitlens.resetAvatarCache',
