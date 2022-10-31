@@ -14,6 +14,7 @@ export class WorkspacesWebview extends WebviewBase<State> {
 			'workspaces.html',
 			'images/gitlens-icon.png',
 			'Workspaces',
+			`${ContextKeys.WebviewPrefix}workspaces`,
 			'workspacesWebview',
 			Commands.ShowWorkspacesPage,
 		);

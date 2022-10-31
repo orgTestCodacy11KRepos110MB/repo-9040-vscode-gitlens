@@ -254,6 +254,7 @@ export const enum ContextKeys {
 	DisabledToggleCodeLens = 'gitlens:disabledToggleCodeLens',
 	Disabled = 'gitlens:disabled',
 	Enabled = 'gitlens:enabled',
+	WorkspacesFocused = 'gitlens:workspaces:focused',
 	HasConnectedRemotes = 'gitlens:hasConnectedRemotes',
 	HasRemotes = 'gitlens:hasRemotes',
 	HasRichRemotes = 'gitlens:hasRichRemotes',
