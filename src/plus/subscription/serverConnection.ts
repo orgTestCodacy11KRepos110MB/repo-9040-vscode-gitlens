@@ -1,7 +1,7 @@
 import type { CancellationToken, Disposable, StatusBarItem, UriHandler } from 'vscode';
 import { CancellationTokenSource, env, EventEmitter, StatusBarAlignment, Uri, window } from 'vscode';
 import { uuid } from '@env/crypto';
-import type { Response } from '@env/fetch';
+import type { RequestInfo, RequestInit, Response } from '@env/fetch';
 import { fetch, getProxyAgent } from '@env/fetch';
 import type { Container } from '../../container';
 import { Logger } from '../../logger';
@@ -10,9 +10,18 @@ import { memoize } from '../../system/decorators/memoize';
 import type { DeferredEvent, DeferredEventExecutor } from '../../system/event';
 import { promisifyDeferred } from '../../system/event';
 
+// TODO: What user-agent should we use?
+const userAgent = 'Visual-Studio-Code-GitLens';
+
 interface AccountInfo {
 	id: string;
 	accountName: string;
+}
+
+interface GraphQLRequest {
+	query: string;
+	operationName?: string;
+	variables?: Record<string, unknown>;
 }
 
 export class ServerConnection implements Disposable {
@@ -75,8 +84,7 @@ export class ServerConnection implements Disposable {
 				agent: getProxyAgent(),
 				headers: {
 					Authorization: `Bearer ${token}`,
-					// TODO: What user-agent should we use?
-					'User-Agent': 'Visual-Studio-Code-GitLens',
+					'User-Agent': userAgent,
 				},
 			});
 		} catch (ex) {
@@ -238,6 +246,58 @@ export class ServerConnection implements Disposable {
 		if (!signingIn && this._statusBarItem != null) {
 			this._statusBarItem.dispose();
 			this._statusBarItem = undefined;
+		}
+	}
+
+	async getWorkspaces(token: string) {
+		const rsp = await this.fetchGraphql(
+			{
+				query: `
+					projects(first: 100) {
+						nodes {
+							id
+							name
+							provider
+						}
+					}
+				`,
+			},
+			token,
+		);
+
+		if (!rsp.ok) {
+			Logger.error(undefined, `Getting workspaces failed: (${rsp.status}) ${rsp.statusText}`);
+			throw new Error(rsp.statusText);
+		}
+
+		return rsp.json();
+	}
+
+	private async fetchGraphql(data: GraphQLRequest, token: string) {
+		return this.fetchCore(Uri.joinPath(this.baseApiUri, 'api/projects/graphql').toString(), token, {
+			// should probably support GET in the future
+			method: 'POST',
+			body: JSON.stringify(data),
+		});
+	}
+
+	private async fetchCore(url: RequestInfo, token: string, init?: RequestInit): Promise<Response> {
+		const scope = getLogScope();
+
+		try {
+			return await fetch(url, {
+				agent: getProxyAgent(),
+				...init,
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'User-Agent': userAgent,
+					'Content-Type': 'application/json',
+					...init?.headers,
+				},
+			});
+		} catch (ex) {
+			Logger.error(ex, scope);
+			throw ex;
 		}
 	}
 }
