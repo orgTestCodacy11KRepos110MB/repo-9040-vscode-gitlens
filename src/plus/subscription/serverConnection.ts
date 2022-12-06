@@ -249,35 +249,11 @@ export class ServerConnection implements Disposable {
 		}
 	}
 
-	async getWorkspaces(token: string) {
-		const rsp = await this.fetchGraphql(
-			{
-				query: `
-					projects(first: 100) {
-						nodes {
-							id
-							name
-							provider
-						}
-					}
-				`,
-			},
-			token,
-		);
-
-		if (!rsp.ok) {
-			Logger.error(undefined, `Getting workspaces failed: (${rsp.status}) ${rsp.statusText}`);
-			throw new Error(rsp.statusText);
-		}
-
-		return rsp.json();
-	}
-
-	private async fetchGraphql(data: GraphQLRequest, token: string) {
-		return this.fetchCore(Uri.joinPath(this.baseApiUri, 'api/projects/graphql').toString(), token, {
-			// should probably support GET in the future
+	async fetchGraphql(data: GraphQLRequest, token: string, init?: RequestInit) {
+		return this.fetchCore(Uri.joinPath(this.baseAccountUri, 'api/projects/graphql').toString(), token, {
 			method: 'POST',
 			body: JSON.stringify(data),
+			...init,
 		});
 	}
 
@@ -285,7 +261,7 @@ export class ServerConnection implements Disposable {
 		const scope = getLogScope();
 
 		try {
-			return await fetch(url, {
+			const options = {
 				agent: getProxyAgent(),
 				...init,
 				headers: {
@@ -294,7 +270,8 @@ export class ServerConnection implements Disposable {
 					'Content-Type': 'application/json',
 					...init?.headers,
 				},
-			});
+			};
+			return await fetch(url, options);
 		} catch (ex) {
 			Logger.error(ex, scope);
 			throw ex;
