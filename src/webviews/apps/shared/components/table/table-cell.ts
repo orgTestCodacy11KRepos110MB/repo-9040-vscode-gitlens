@@ -1,4 +1,4 @@
-import { attr, css, customElement, FASTElement, html, repeat, volatile, when } from '@microsoft/fast-element';
+import { attr, css, customElement, FASTElement, html } from '@microsoft/fast-element';
 import { elementBase } from '../styles/base';
 
 const template = html<TableCell>`

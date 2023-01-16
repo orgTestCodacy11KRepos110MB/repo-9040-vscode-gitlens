@@ -1,5 +1,5 @@
-import { attr, css, customElement, FASTElement, html, repeat, volatile, when } from '@microsoft/fast-element';
-import { elementBase } from '../../../shared/components/styles/base';
+import { css, customElement, FASTElement, html } from '@microsoft/fast-element';
+import { elementBase } from '../styles/base';
 
 const template = html<TableContainer>`
 	<template role="table">

@@ -1,4 +1,4 @@
-import { attr, css, customElement, FASTElement, html, repeat, volatile, when } from '@microsoft/fast-element';
+import { css, customElement, FASTElement, html } from '@microsoft/fast-element';
 import { srOnly } from '../../../shared/components/styles/a11y';
 import { elementBase } from '../../../shared/components/styles/base';
 
