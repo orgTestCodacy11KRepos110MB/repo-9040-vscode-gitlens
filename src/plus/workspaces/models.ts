@@ -249,6 +249,11 @@ export interface WorkspacesWithPullRequestsResponse {
 			}[];
 		};
 	};
+	errors?: {
+		message: string;
+		path: unknown[];
+		statusCode: number;
+	}[];
 }
 
 export interface IssuesResponse {

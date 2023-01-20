@@ -1,6 +1,8 @@
-import type { Disposable } from 'vscode';
+import type { AuthenticationSession, Disposable } from 'vscode';
 import type { RequestInit } from '@env/fetch';
 import type { Container } from '../../container';
+import type { GitRemote } from '../../git/models/remote';
+import type { RichRemoteProvider } from '../../git/remotes/richRemoteProvider';
 import { Logger } from '../../logger';
 import type { ServerConnection } from '../subscription/serverConnection';
 import type {
@@ -22,7 +24,7 @@ export class WorkspacesApi implements Disposable {
 	}
 
 	private async getAccessToken() {
-		// TODO: should probably should get scopes from somewhere
+		// TODO: should probably get scopes from somewhere
 		const sessions = await this.container.subscriptionAuthentication.getSessions(['gitlens']);
 		if (!sessions.length) {
 			return;
@@ -32,14 +34,48 @@ export class WorkspacesApi implements Disposable {
 		return session.accessToken;
 	}
 
-	private async getProviderCredentials(type: WorkspaceProvider) {
-		// TODO: get tokens from Providers
-		let token;
-		switch (type) {
-			case 'GITHUB':
-				token = { access_token: '', is_pat: false };
-				break;
+	private async getRichProvider(): Promise<GitRemote<RichRemoteProvider> | undefined> {
+		const remotes: GitRemote<RichRemoteProvider>[] = [];
+		for (const repo of this.container.git.openRepositories) {
+			const richRemote = await repo.getRichRemote(true);
+			if (richRemote == null || remotes.includes(richRemote)) {
+				continue;
+			}
+			remotes.push(richRemote);
 		}
+
+		if (remotes.length === 0) {
+			return undefined;
+		}
+
+		return remotes[0];
+	}
+
+	private async getRichProviderSession(): Promise<AuthenticationSession | undefined> {
+		const remote = await this.getRichProvider();
+		let session = remote?.provider.session();
+		if (session == null) {
+			return undefined;
+		}
+
+		if ((session as Promise<AuthenticationSession | undefined>).then != null) {
+			session = await session;
+		}
+		return session;
+	}
+
+	private async getProviderCredentials(_type: WorkspaceProvider) {
+		const session = await this.getRichProviderSession();
+		if (session == null) return undefined;
+
+		// TODO: get tokens from Providers
+		// let token;
+		// switch (type) {
+		// 	case 'GITHUB':
+		// 		token = { access_token: session.accessToken, is_pat: false };
+		// 		break;
+		// }
+		const token = { github: { access_token: session.accessToken, is_pat: false } };
 
 		return Promise.resolve(token);
 	}
@@ -323,6 +359,12 @@ export class WorkspacesApi implements Disposable {
 
 		let json: WorkspacesWithPullRequestsResponse | undefined = await rsp.json();
 
+		if (json?.errors != null && json.errors.length > 0) {
+			const error = json.errors[0];
+			Logger.error(undefined, `Getting pull requests failed: (${error.statusCode}) ${error.message}`);
+			throw new Error(error.message);
+		}
+
 		if (json?.data.projects.nodes[0].provider_data.pull_requests.is_fetching === true) {
 			await new Promise(resolve => setTimeout(resolve, 200));
 			json = await this.getWorkspacesWithPullRequests();
@@ -330,4 +372,8 @@ export class WorkspacesApi implements Disposable {
 
 		return json;
 	}
+
+	async createWorkspace(): Promise<void> {}
+
+	async ensureWorkspace(): Promise<void> {}
 }
